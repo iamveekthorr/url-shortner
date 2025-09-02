@@ -45,24 +45,24 @@ Follow the link to see full description [project url](https://roadmap.sh/project
 > An alternative is to setup [doppler](https://doppler.com/) so you
 > do not have to worry about installing another dev-dependency.
 
-### USING AIR
+### Using Air
 
 ```bash
 # if you have air installed just run the air command
 air
 ```
 
-### USING Pure Golang
+### Using Pure Golang
 
 ```bash
 # This assumes you have environment variables set
 go run main.go
 ```
 
-### using Doppler
+### Using Doppler
 
 ```bash
-# Run doppler login to aauthenticate
+# Run doppler login to authenticate
 doppler login
 
 # Run setup command
