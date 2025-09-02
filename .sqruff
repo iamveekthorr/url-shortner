@@ -1,0 +1,30 @@
+[sqruff]
+dialect = postgres
+exclude_rules = LT12
+templater = raw
+rules = all
+sql_file_exts = .sql
+encoding = autodetect
+
+[sqruff:rules:layout.indent]
+indent_unit = tab
+tab_space_size = 4
+indented_joins = true
+
+[sqruff:rules:capitalisation.keywords]
+capitalisation_policy = upper
+
+[sqruff:rules:capitalisation.identifiers]
+capitalisation_policy = lower
+
+[sqruff:rules:capitalisation.functions]
+capitalisation_policy = lower
+
+[sqruff:rules:capitalisation.types]
+capitalisation_policy = upper
+
+# Layout configuration for better formatting
+[sqruff:layout:type:alias_expression]
+spacing_before = align
+align_within = select_clause
+align_scope = bracketed

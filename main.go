@@ -2,22 +2,76 @@
 package main
 
 import (
-	"fmt"
+	"context"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+	"time"
 
-	"github.com/iamveekthorr/utils"
+	"github.com/iamveekthorr/models"
+	"github.com/iamveekthorr/routes"
 )
 
 func main() {
-	var url string
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
-	fmt.Print("Enter the url: ")
-	urls := make(map[string]string)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // fallback to default port if one isn't set
+	}
 
-	fmt.Scanln(&url)
+	// Incrementally build the address using string builder
+	// so we can have proper memory management and thread safety.
+	var portBuilder strings.Builder
+	portBuilder.WriteString(":")
+	portBuilder.WriteString(port)
 
-	// transform to short code;
+	address := portBuilder.String()
 
-	// make new object
-	urls[url] = utils.MakeShortCode(7)
-	fmt.Printf("%v", urls)
+	// Initialize the router
+	router := routes.SetupRouter()
+
+	// server configuration
+	srv := &http.Server{
+		Addr:    address,
+		Handler: router,
+	}
+
+	connectionString := os.Getenv("DB_CONNECTION_STRING")
+	if connectionString == "" {
+		log.Fatal("could not get connection string")
+	}
+
+	models.InitDatabase(connectionString)
+	defer models.CloseDatabase()
+
+	// Initializing the server in a goroutine so that
+	// it won't block the graceful shutdown handling below
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	// Listen for the interrupt signal.
+	<-ctx.Done()
+
+	// Restore default behavior on the interrupt signal and notify user of shutdown.
+	stop()
+	log.Println("shutting down gracefully, press Ctrl+C again to force")
+
+	// The context is used to inform the server it has 5 seconds to finish
+	// the request it is currently handling
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("Server forced to shutdown: ", err)
+	}
+
+	log.Println("Server exiting")
 }
