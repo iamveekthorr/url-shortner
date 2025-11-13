@@ -46,7 +46,9 @@ func main() {
 		log.Fatal("could not get connection string")
 	}
 
-	models.InitDatabase(connectionString)
+	if err := models.InitDatabase(connectionString); err != nil {
+		log.Fatalf("%v", err)
+	}
 	defer models.CloseDatabase()
 
 	// Initializing the server in a goroutine so that
